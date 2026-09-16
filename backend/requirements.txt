@@ -5,5 +5,10 @@ scikit-learn
 wordcloud
 nltk
 xgboost
-streamlit
-flask
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pytest
+httpx2
+ipykernel
