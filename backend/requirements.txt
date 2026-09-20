@@ -1,4 +1,5 @@
 numpy
+pandas
 matplotlib
 seaborn
 scikit-learn
@@ -12,3 +13,5 @@ pydantic
 pytest
 httpx2
 ipykernel
+imbalanced-learn
+datasets

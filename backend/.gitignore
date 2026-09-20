@@ -74,6 +74,7 @@ Thumbs.db
 # Ignore raw/large datasets
 data/raw/
 data/processed/
+Data/
 
 # ML experiment outputs
 mlruns/

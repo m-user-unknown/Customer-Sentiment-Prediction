@@ -88,3 +88,16 @@ def test_missing_file_and_unsupported_body(client):
     unsupported = client.post("/predict", content=b"text/plain")
     assert unsupported.status_code == 415
     assert unsupported.json()["error"]["code"] == "UNSUPPORTED_MEDIA_TYPE"
+
+
+def test_model_class_mapping_respects_model_order():
+    class ReversedClassesModel:
+        classes_ = [1, 0]
+
+        def predict_proba(self, features):
+            import numpy as np
+            return np.array([[0.8, 0.2] for _ in features])
+
+    predictor = ReversedClassesModel()
+    assert api.sentiment_mapping(predictor, 0) == "Positive"
+    assert api.sentiment_mapping(predictor, 1) == "Negative"

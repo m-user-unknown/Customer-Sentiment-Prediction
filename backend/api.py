@@ -29,6 +29,32 @@ LOGGER = logging.getLogger("customer_sentiment_api")
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+CONTRACTION_MAP = {
+    "ain't": "is not", "aren't": "are not", "can't": "cannot", "can't've": "cannot have",
+    "could've": "could have", "couldn't": "could not", "didn't": "did not",
+    "doesn't": "does not", "don't": "do not", "hadn't": "had not", "hasn't": "has not",
+    "haven't": "have not", "he'd": "he would", "he'll": "he will", "he's": "he is",
+    "how'd": "how did", "how'll": "how will", "how's": "how is", "i'd": "i would",
+    "i'll": "i will", "i'm": "i am", "i've": "i have", "isn't": "is not",
+    "it'd": "it would", "it'll": "it will", "it's": "it is", "let's": "let us",
+    "mightn't": "might not", "might've": "might have", "mustn't": "must not",
+    "must've": "must have", "needn't": "need not", "shan't": "shall not",
+    "she'd": "she would", "she'll": "she will", "she's": "she is",
+    "should've": "should have", "shouldn't": "should not", "that'd": "that would",
+    "that's": "that is", "there'd": "there would", "there's": "there is",
+    "they'd": "they would", "they'll": "they will", "they're": "they are",
+    "they've": "they have", "wasn't": "was not", "we'd": "we would",
+    "we'll": "we will", "we're": "we are", "we've": "we have", "weren't": "were not",
+    "what'll": "what will", "what're": "what are", "what's": "what is",
+    "what've": "what have", "where'd": "where did", "where's": "where is",
+    "who'll": "who will", "who's": "who is", "won't": "will not", "would've": "would have",
+    "wouldn't": "would not", "you'd": "you would", "you'll": "you will",
+    "you're": "you are", "you've": "you have",
+}
+NEGATION_WORDS = {"no", "nor", "not", "never", "none", "nothing", "nowhere", "neither", "without", "cannot", "can", "against"}
+CONTRACTION_PATTERN = re.compile(r"\b(" + "|".join(re.escape(key) for key in CONTRACTION_MAP) + r")\b", flags=re.IGNORECASE)
+STEMMER = PorterStemmer()
+
 
 class PredictionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -54,28 +80,56 @@ def get_int_setting(name: str, default: int) -> int:
 
 
 def get_cors_origins() -> list[str]:
-    configured = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+    default_origins = (
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://0.0.0.0:5173,http://localhost:3000,"
+        "http://127.0.0.1:3000,http://0.0.0.0:3000"
+    )
+    configured = os.getenv("CORS_ORIGINS", default_origins)
     return [origin.strip() for origin in configured.split(",") if origin.strip()]
+
+
+def get_server_host() -> str:
+    value = os.getenv("API_HOST", "0.0.0.0").strip() or "0.0.0.0"
+    return value
+
+
+def get_server_port() -> int:
+    return get_int_setting("API_PORT", 8000)
+
+
+def expand_contractions(text: str) -> str:
+    def replace(match: re.Match[str]) -> str:
+        return CONTRACTION_MAP.get(match.group(0).lower(), match.group(0))
+    return CONTRACTION_PATTERN.sub(replace, text)
 
 
 def load_stopwords() -> set[str]:
     try:
-        return set(stopwords.words("english"))
+        english_stopwords = set(stopwords.words("english"))
     except LookupError:
         if nltk.download("stopwords", quiet=True):
-            return set(stopwords.words("english"))
-        raise RuntimeError("NLTK stopwords data is unavailable.") from None
+            english_stopwords = set(stopwords.words("english"))
+        else:
+            raise RuntimeError("NLTK stopwords data is unavailable.") from None
+    return english_stopwords - NEGATION_WORDS
 
 
-def load_models() -> tuple[Any, Any, Any]:
+def load_models() -> tuple[Any, Any | None, Any]:
     LOGGER.info("Loading trained model artifacts.")
     try:
         with open(MODELS_DIR / "model_xgb.pkl", "rb") as model_file:
             predictor = pickle.load(model_file)
-        with open(MODELS_DIR / "scaler.pkl", "rb") as scaler_file:
-            scaler = pickle.load(scaler_file)
-        with open(MODELS_DIR / "countVectorizer.pkl", "rb") as vectorizer_file:
+
+        vectorizer_path = MODELS_DIR / "countVectorizer.pkl"
+        with open(vectorizer_path, "rb") as vectorizer_file:
             vectorizer = pickle.load(vectorizer_file)
+
+        scaler = None
+        scaler_path = MODELS_DIR / "scaler.pkl"
+        if scaler_path.exists():
+            with open(scaler_path, "rb") as scaler_file:
+                scaler = pickle.load(scaler_file)
     except Exception as error:
         LOGGER.exception("Model artifacts could not be loaded: %s", type(error).__name__)
         raise RuntimeError("Model artifacts could not be loaded.") from error
@@ -166,9 +220,9 @@ def model_info():
     classes = getattr(predictor, "classes_", [0, 1])
     return {
         "model": {"type": type(predictor).__name__, "classes": [str(value) for value in classes]},
-        "preprocessing": {"text_cleaning": "non-letters removed, lowercase, English stopwords removed, Porter stemming"},
+        "preprocessing": {"text_cleaning": "contractions expanded, non-letters removed, negation words preserved, English stopwords removed, Porter stemming"},
         "vectorizer": {"type": type(vectorizer).__name__, "vocabulary_size": len(getattr(vectorizer, "vocabulary_", {}))},
-        "scaler": {"type": type(scaler).__name__, "feature_count": getattr(scaler, "n_features_in_", None)},
+        "scaler": {"type": type(scaler).__name__ if scaler else "none", "feature_count": getattr(scaler, "n_features_in_", None) if scaler else None},
         "supported_sentiment_classes": ["Positive", "Negative"],
     }
 
@@ -240,17 +294,23 @@ async def predict_bulk(file: UploadFile, predictor: Any, scaler: Any, vectorizer
 
 
 def preprocess_text(text: str, stopword_list: set[str]) -> str:
-    review = re.sub("[^a-zA-Z]", " ", text)
-    words = review.lower().split()
-    stemmer = PorterStemmer()
-    return " ".join(stemmer.stem(word) for word in words if word not in stopword_list)
+    normalized = text.lower()
+    normalized = expand_contractions(normalized)
+    review = re.sub(r"[^a-zA-Z]", " ", normalized)
+    words = review.split()
+    return " ".join(STEMMER.stem(word) for word in words if word not in stopword_list)
 
 
 def single_prediction(predictor: Any, scaler: Any, vectorizer: Any, text_input: str, stopword_list: set[str]) -> str:
-    features = vectorizer_features(vectorizer.transform([preprocess_text(text_input, stopword_list)]))
-    scaled_features = scaler.transform(features)
-    prediction = predictor.predict_proba(scaled_features).argmax(axis=1)[0]
-    return sentiment_mapping(prediction)
+    features = vectorizer.transform([preprocess_text(text_input, stopword_list)])
+    if scaler is not None:
+        features = scaler.transform(vectorizer_features(features))
+
+    if hasattr(predictor, "predict_proba"):
+        prediction = predictor.predict_proba(vectorizer_features(features)).argmax(axis=1)[0]
+    else:
+        prediction = int(predictor.predict(vectorizer_features(features))[0])
+    return sentiment_mapping(predictor, prediction)
 
 
 def bulk_prediction(predictor: Any, scaler: Any, vectorizer: Any, data: pd.DataFrame, stopword_list: set[str], batch_size: int):
@@ -259,10 +319,15 @@ def bulk_prediction(predictor: Any, scaler: Any, vectorizer: Any, data: pd.DataF
     for start in range(0, len(result), batch_size):
         batch = result["Sentence"].iloc[start:start + batch_size].astype(str)
         corpus = [preprocess_text(text, stopword_list) for text in batch]
-        features = vectorizer_features(vectorizer.transform(corpus))
-        scaled_features = scaler.transform(features)
-        predictions.extend(predictor.predict_proba(scaled_features).argmax(axis=1).tolist())
-    result["Predicted sentiment"] = [sentiment_mapping(value) for value in predictions]
+        features = vectorizer.transform(corpus)
+        if scaler is not None:
+            features = scaler.transform(vectorizer_features(features))
+
+        if hasattr(predictor, "predict_proba"):
+            predictions.extend(predictor.predict_proba(vectorizer_features(features)).argmax(axis=1).tolist())
+        else:
+            predictions.extend(int(value) for value in predictor.predict(vectorizer_features(features)))
+    result["Predicted sentiment"] = [sentiment_mapping(predictor, value) for value in predictions]
     statistics = get_sentiment_statistics(result)
     predictions_csv = BytesIO()
     result.to_csv(predictions_csv, index=False)
@@ -295,10 +360,19 @@ def get_distribution_graph(data: pd.DataFrame) -> BytesIO:
     return graph
 
 
-def sentiment_mapping(value: int) -> str:
-    return "Positive" if value == 1 else "Negative"
+def sentiment_mapping(predictor: Any, value: int) -> str:
+    classes = getattr(predictor, "classes_", [0, 1])
+    label_value = value
+    if isinstance(value, int) and 0 <= value < len(classes):
+        label_value = classes[value]
+    normalized = str(label_value).strip().lower()
+    if normalized in {"1", "positive", "true"}:
+        return "Positive"
+    if normalized in {"0", "negative", "false"}:
+        return "Negative"
+    return "Positive" if int(value) == 1 else "Negative"
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api:app", host="0.0.0.0", port=5000, reload=True)
+    uvicorn.run("api:app", host=get_server_host(), port=get_server_port(), reload=True)
