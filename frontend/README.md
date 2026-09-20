@@ -71,13 +71,19 @@ The frontend connects to the backend API through the `VITE_API_URL` environment 
 If you do not set it, the app defaults to:
 
 ```bash
-http://0.0.0.0:8000
+http://localhost:8000
 ```
 
 You can define it in a `.env` file like this:
 
 ```bash
-VITE_API_URL=http://0.0.0.0:8000
+VITE_API_URL=http://localhost:8000
+```
+
+For production deployment, set the same variable to your deployed backend URL, for example:
+
+```bash
+VITE_API_URL=https://your-backend-domain.com
 ```
 
 ## Installation
