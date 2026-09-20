@@ -49,13 +49,6 @@ export default function Navbar({ page, setPage, darkMode, setDarkMode }) {
             Features
           </a>
           <a
-            className={page === "api" ? "active" : ""}
-            href="#api-docs"
-            onClick={navigate("api")}
-          >
-            API Docs
-          </a>
-          <a
             className={page === "about" ? "active" : ""}
             href="#about"
             onClick={navigate("about")}
@@ -104,13 +97,6 @@ export default function Navbar({ page, setPage, darkMode, setDarkMode }) {
             onClick={navigate("features")}
           >
             Features
-          </a>
-          <a
-            className={page === "api" ? "active" : ""}
-            href="#api-docs"
-            onClick={navigate("api")}
-          >
-            API Docs
           </a>
           <a
             className={page === "about" ? "active" : ""}

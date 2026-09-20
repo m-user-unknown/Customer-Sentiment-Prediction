@@ -5,7 +5,6 @@ import Home from "./pages/Home";
 import LandingPage from "./pages/LandingPage";
 import HowItWorks from "./pages/HowItWorks";
 import Features from "./pages/Features";
-import ApiDocs from "./pages/ApiDocs";
 import About from "./pages/About";
 import { predictCsv, predictText } from "./services/api";
 
@@ -15,7 +14,9 @@ export default function App() {
     try {
       const saved = localStorage.getItem("sentimentai_theme");
       if (saved !== null) return saved === "dark";
-      return window.matchMedia?.("(prefers-color-scheme: dark)").matches || false;
+      return (
+        window.matchMedia?.("(prefers-color-scheme: dark)").matches || false
+      );
     } catch {
       return false;
     }
@@ -145,7 +146,6 @@ export default function App() {
       {page === "home" && <Home state={state} />}
       {page === "how" && <HowItWorks />}
       {page === "features" && <Features onTryNow={() => setPage("home")} />}
-      {page === "api" && <ApiDocs />}
       {page === "about" && <About />}
       <Footer />
     </main>
