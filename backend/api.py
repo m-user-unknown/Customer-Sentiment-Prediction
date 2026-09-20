@@ -83,7 +83,8 @@ def get_cors_origins() -> list[str]:
     default_origins = (
         "http://localhost:5173,http://127.0.0.1:5173,"
         "http://0.0.0.0:5173,http://localhost:3000,"
-        "http://127.0.0.1:3000,http://0.0.0.0:3000"
+        "http://127.0.0.1:3000,http://0.0.0.0:3000,"
+        "https://sentimentai-jet.vercel.app"
     )
     configured = os.getenv("CORS_ORIGINS", default_origins)
     return [origin.strip() for origin in configured.split(",") if origin.strip()]
@@ -164,9 +165,7 @@ app = FastAPI(
 )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://sentimentai-jet.vercel.app/",
-    ],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
