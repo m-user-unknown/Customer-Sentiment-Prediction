@@ -11,7 +11,29 @@ import { predictCsv, predictText } from "./services/api";
 
 export default function App() {
   const [page, setPage] = React.useState("landing");
-  const [darkMode, setDarkMode] = React.useState(false);
+  const [darkMode, setDarkMode] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem("sentimentai_theme");
+      if (saved !== null) return saved === "dark";
+      return window.matchMedia?.("(prefers-color-scheme: dark)").matches || false;
+    } catch {
+      return false;
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("sentimentai_theme", darkMode ? "dark" : "light");
+    } catch {
+      // Ignore storage restrictions if any
+    }
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
+
   const [review, setReview] = React.useState("");
   const [uploadedFile, setUploadedFile] = React.useState(null);
   const [fileName, setFileName] = React.useState("");

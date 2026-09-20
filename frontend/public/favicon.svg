@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="SentimentAI brand icon">
+  <defs>
+    <linearGradient id="sentimentai-bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#sentimentai-bg)"/>
+  <path d="M26 96h76" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+  <path d="M34 88V58" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+  <path d="M56 88V44" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+  <path d="M78 88V63" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+  <path d="M100 88V32" stroke="#f8fafc" stroke-width="8" stroke-linecap="round"/>
+  <path d="M30 74L52 58L76 67L100 42" stroke="#7dd3fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

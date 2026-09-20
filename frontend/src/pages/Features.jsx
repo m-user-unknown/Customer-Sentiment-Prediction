@@ -79,7 +79,7 @@ export default function Features({ onTryNow }) {
         ))}
       </div>
       <section className="use-case-band">
-        <div>
+        <div className="use-case-content">
           <h2>
             <BarChart3 /> Real-World Use Cases
           </h2>
