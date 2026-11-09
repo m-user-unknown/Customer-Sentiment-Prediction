@@ -376,4 +376,4 @@ def sentiment_mapping(predictor: Any, value: int) -> str:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api:app", host=get_server_host(), port=get_server_port(), reload=True)
+    uvicorn.run("app:app", host=get_server_host(), port=get_server_port(), reload=True)
