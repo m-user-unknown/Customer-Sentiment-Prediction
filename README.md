@@ -36,11 +36,14 @@ An NLP application that predicts whether a customer review is **Positive** or **
 ```text
 .
 ├── backend/
-│   ├── api.py
+│   ├── app.py
 │   ├── requirements.txt
 │   ├── tests/
 │   ├── Data/
 │   └── Models/
+├── api.py
+├── pyproject.toml
+├── requirements.txt
 └── frontend/
 		├── package.json
 		└── src/
@@ -59,7 +62,7 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m nltk.downloader stopwords
-uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 The backend is available at `http://localhost:8000`.
@@ -129,3 +132,9 @@ The backend supports these environment variables:
 | `PREDICTION_BATCH_SIZE` | `512`                                         | CSV rows processed per model call |
 
 For additional backend endpoint and error details, see [backend/README.md](backend/README.md).
+
+## Deploy the backend to Vercel
+
+Deploy from the repository root. The root `pyproject.toml` points Vercel to
+`api:app`, which re-exports the FastAPI application from `backend/app.py`.
+The root `requirements.txt` contains the backend's runtime dependencies.

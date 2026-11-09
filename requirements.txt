@@ -1,0 +1,8 @@
+fastapi
+matplotlib
+nltk
+pandas
+pydantic
+python-multipart
+scikit-learn
+xgboost

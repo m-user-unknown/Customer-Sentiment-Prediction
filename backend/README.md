@@ -8,7 +8,7 @@ The backend folder contains the ML API, model assets, data files, and test cover
 
 ```text
 backend/
-├── api.py                     # FastAPI application and prediction logic
+├── app.py                     # FastAPI application and prediction logic
 ├── requirements.txt          # Python dependencies
 ├── pytest.ini                # pytest configuration
 ├── README.md                 # Backend documentation
@@ -56,7 +56,7 @@ python -m nltk.downloader stopwords
 ## Run the API
 
 ```bash
-uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 Then open:
@@ -87,7 +87,7 @@ Example:
 ```bash
 export CORS_ORIGINS=http://localhost:5173
 export MAX_UPLOAD_SIZE_BYTES=10485760
-uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ## Prediction flow
