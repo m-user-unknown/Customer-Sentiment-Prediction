@@ -4,7 +4,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-import api
+import backend.app as app
 
 
 @pytest.fixture()
@@ -29,9 +29,9 @@ def client(monkeypatch):
         def transform(self, features):
             return features
 
-    monkeypatch.setattr(api, "load_stopwords", lambda: set())
-    monkeypatch.setattr(api, "load_models", lambda: (FakeModel(), FakeScaler(), FakeVectorizer()))
-    with TestClient(api.app) as test_client:
+    monkeypatch.setattr(app, "load_stopwords", lambda: set())
+    monkeypatch.setattr(app, "load_models", lambda: (FakeModel(), FakeScaler(), FakeVectorizer()))
+    with TestClient(app.app) as test_client:
         yield test_client
 
 
@@ -99,5 +99,5 @@ def test_model_class_mapping_respects_model_order():
             return np.array([[0.8, 0.2] for _ in features])
 
     predictor = ReversedClassesModel()
-    assert api.sentiment_mapping(predictor, 0) == "Positive"
-    assert api.sentiment_mapping(predictor, 1) == "Negative"
+    assert app.sentiment_mapping(predictor, 0) == "Positive"
+    assert app.sentiment_mapping(predictor, 1) == "Negative"
