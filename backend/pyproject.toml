@@ -5,21 +5,18 @@ description = "Customer Sentiment Prediction using NLP and Machine Learning"
 requires-python = ">=3.12"
 
 dependencies = [
+    "fastapi",
+    "httpx",
+    "matplotlib",
+    "nltk",
     "numpy",
     "pandas",
-    "matplotlib",
-    "seaborn",
-    "scikit-learn",
-    "wordcloud",
-    "nltk",
-    "xgboost",
-    "fastapi",
     "uvicorn[standard]",
     "python-multipart",
     "pydantic",
-    "httpx",
-    "imbalanced-learn",
-    "datasets"
+    "pytest",
+    "scikit-learn",
+    "xgboost"
 ]
 
 [tool.vercel]
