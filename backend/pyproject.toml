@@ -1,2 +1,26 @@
+[project]
+name = "customer-sentiment-prediction"
+version = "1.0.0"
+description = "Customer Sentiment Prediction using NLP and Machine Learning"
+requires-python = ">=3.12"
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "seaborn",
+    "scikit-learn",
+    "wordcloud",
+    "nltk",
+    "xgboost",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+    "pydantic",
+    "httpx",
+    "imbalanced-learn",
+    "datasets"
+]
+
 [tool.vercel]
 entrypoint = "app:app"
