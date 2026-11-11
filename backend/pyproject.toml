@@ -14,9 +14,8 @@ dependencies = [
     "uvicorn[standard]",
     "python-multipart",
     "pydantic",
-    "pytest",
     "scikit-learn",
-    "xgboost"
+    "xgboost",
 ]
 
 [tool.vercel]
